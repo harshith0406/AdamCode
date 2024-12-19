@@ -109,7 +109,7 @@
             const func = document.getElementById("function").value;
 
             // Define the function f(x, y)
-            const f = new Function("x", "y", return ${func};);
+            const f = new Function("x", "y", `return ${func};`);
 
             const resultsTable = document.getElementById("resultsTable");
             const tbody = resultsTable.querySelector("tbody");
