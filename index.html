@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerical Methods Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 90%;
+            max-width: 600px;
+        }
+        th, td {
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Numerical Methods Calculator</h1>
+    <form id="numericalForm">
+        <label for="x0">Initial x (x₀):</label>
+        <input type="number" id="x0" required step="any">
+
+        <label for="y0">Initial y (y₀):</label>
+        <input type="number" id="y0" required step="any">
+
+        <label for="h">Step size (h):</label>
+        <input type="number" id="h" required step="any">
+
+        <label for="steps">Number of steps:</label>
+        <input type="number" id="steps" required>
+
+        <label for="function">Function (dy/dx = f(x, y)): e.g., y-x</label>
+        <input type="text" id="function" required>
+
+        <button type="button" onclick="runNumericalMethods()">Calculate</button>
+    </form>
+
+    <h2>Results</h2>
+    <table id="resultsTable" hidden>
+        <thead>
+            <tr>
+                <th>Step</th>
+                <th>x</th>
+                <th>y (Runge-Kutta)</th>
+                <th>y (Adams-Bashforth)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        function runNumericalMethods() {
+            const x0 = parseFloat(document.getElementById("x0").value);
+            const y0 = parseFloat(document.getElementById("y0").value);
+            const h = parseFloat(document.getElementById("h").value);
+            const steps = parseInt(document.getElementById("steps").value);
+            const func = document.getElementById("function").value;
+
+            // Define the function f(x, y)
+            const f = new Function("x", "y", return ${func};);
+
+            const resultsTable = document.getElementById("resultsTable");
+            const tbody = resultsTable.querySelector("tbody");
+            tbody.innerHTML = ""; // Clear old results
+
+            // Runge-Kutta Method (4th order)
+            let x_rk = x0, y_rk = y0;
+            const rkResults = [[x_rk, y_rk]];
+
+            for (let i = 1; i <= steps; i++) {
+                const k1 = h * f(x_rk, y_rk);
+                const k2 = h * f(x_rk + h / 2, y_rk + k1 / 2);
+                const k3 = h * f(x_rk + h / 2, y_rk + k2 / 2);
+                const k4 = h * f(x_rk + h, y_rk + k3);
+                y_rk = y_rk + (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+                x_rk += h;
+                rkResults.push([x_rk, y_rk]);
+            }
+
+            // Adams-Bashforth Method (Two-step)
+            let x_ab = x0, y_ab = y0;
+            const abResults = [[x_ab, y_ab]];
+            const fPrev = [f(x0, y0)];
+            const x1_ab = x_ab + h;
+            const y1_ab = y_ab + h * fPrev[0]; // First step using Euler's method
+            abResults.push([x1_ab, y1_ab]);
+            fPrev.push(f(x1_ab, y1_ab));
+
+            for (let i = 2; i <= steps; i++) {
+                const x_next = abResults[i - 1][0] + h;
+                const y_next =
+                    abResults[i - 1][1] +
+                    (h / 2) * (3 * fPrev[1] - fPrev[0]); // Adams-Bashforth formula
+                abResults.push([x_next, y_next]);
+                fPrev[0] = fPrev[1];
+                fPrev[1] = f(x_next, y_next);
+            }
+
+            // Populate the results table
+            for (let i = 0; i <= steps; i++) {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${i}</td>
+                    <td>${rkResults[i][0].toFixed(4)}</td>
+                    <td>${rkResults[i][1].toFixed(4)}</td>
+                    <td>${abResults[i][1].toFixed(4)}</td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            resultsTable.hidden = false;
+        }
+    </script>
+</body>
+</html>
